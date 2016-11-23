@@ -1,0 +1,15 @@
+{
+  "name": "puppet-luks",
+  "version": "0.1.1",
+  "author": "sammcj",
+  "summary": "Puppet module for managing LUKS encrypted volumes",
+  "license": "Apache 2.0",
+  "source": "https://github.com/sammcj/puppet-luks.git",
+  "project_page": "https://github.com/sammcj/puppet-luks",
+  "issues_url": "https://github.com/sammcj/puppet-luks/issues",
+  "dependencies": [
+    {"name":"puppetlabs-stdlib","version_requirement":">= 1.0.0"}
+  ],
+  "data_provider": null
+}
+
