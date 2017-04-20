@@ -29,7 +29,7 @@
 #  The name to use in `/dev/mapper` for the device, defaults to the name
 #  to the name of the resource.
 #
-# [*temp*]
+# [*temp_key_path*]
 #  Path to temporary file to store the encryption key in, defaults to
 #  "/dev/shm/${name}".
 #
@@ -49,8 +49,8 @@ define luks::device(
   $base64 = false,
   $mapper = $name,
   $remove_catalog = false,
-  $temp   = "/dev/shm/${name}",
-  $shred = "/usr/bin/shred --iterations 10 --random=/dev/urandom ${temp}",
+  $force_format = false,
+  $temp_key_path   = "/dev/shm/${name}",
 ) {
   # Ensure LUKS is available.
   include luks
@@ -64,7 +64,7 @@ define luks::device(
 
   # Temporary file to hold the key.  Actual key contents are put in placed
   # and removed via the $create_key and $delete_key exec resources.
-  file { $temp:
+  file { $temp_key_path:
     ensure => file,
     backup => false,
     owner  => 'root',
@@ -75,9 +75,15 @@ define luks::device(
 
   # Put key contents into temporary file; decode if base64-encoded.
   if $base64 {
-    $create_key_cmd = "/bin/echo -n '${key}' | /usr/bin/base64 -d > ${temp}"
+    $create_key_cmd = "/bin/echo -n '${key}' | /usr/bin/base64 -d > ${temp_key_path}"
   } else {
-    $create_key_cmd = "/bin/echo -n '${key}' > ${temp}"
+    $create_key_cmd = "/bin/echo -n '${key}' > ${temp_key_path}"
+  }
+
+  if $force_format == true {
+    $format_command = '/sbin/cryptsetup luksFormat --batch-mode'
+  } else {
+    $format_command = '/sbin/cryptsetup luksFormat'
   }
 
   exec { $create_key:
@@ -89,7 +95,7 @@ define luks::device(
 
   # Format as LUKS device if it isn't already.
   exec { $luks_format:
-    command => "/bin/echo 'YES' | /sbin/cryptsetup luksFormat ${device} ${temp}",
+    command => "${format_command} ${device} ${temp_key_path}",
     user    => 'root',
     unless  => "/sbin/cryptsetup isLuks ${device}",
     require => [Class['luks'], Exec[$create_key]],
@@ -97,7 +103,7 @@ define luks::device(
 
   # Open the LUKS device.
   exec { $luks_open:
-    command     => "/sbin/cryptsetup --key-file ${temp} luksOpen ${device} ${mapper}",
+    command     => "/sbin/cryptsetup --key-file ${temp_key_path} luksOpen ${device} ${mapper}",
     user        => 'root',
     onlyif      => "/usr/bin/test ! -b ${devmapper}",
     creates     => $devmapper,
@@ -107,11 +113,8 @@ define luks::device(
     require     => Exec[$luks_format],
   }
 
-  # Shredding probably not necessary on ramdisk file, but nevertheless
-  # scramble the contents at those pages with `shred` -- also covers
-  # the case when temp location is customized.
   exec { $delete_key:
-    command     => "${shred} && /bin/echo -n > ${temp}",
+    command     => "/usr/bin/shred --iterations 2 --random=/dev/urandom ${temp_key_path} && /bin/echo -n > ${temp_key_path}",
     user        => 'root',
     refreshonly => true,
   }

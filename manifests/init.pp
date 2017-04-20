@@ -22,9 +22,12 @@
 #  The name to use in `/dev/mapper` for the device, defaults to the name
 #  to the name of the resource.
 #
-# [*temp*]
-#  Path to temporary file to store the encryption key in, defaults to
-#  "/dev/shm/${name}".
+# [*puppet_conf_file*]
+# Path to the Puppet conf file
+# For Puppet Enterprise this should be changed to '/etc/puppetlabs/puppet/puppet.conf'
+#
+# [*puppet_catalog*]
+# For Puppet Enterprise this should be changed to '/opt/puppetlabs/puppet/cache/client_data/catalog/*.json'
 #
 # === Example
 #
@@ -38,19 +41,31 @@
 #  luks::device { 'secretdata':
 #    device         => '/dev/sdb1',
 #    key            => $secret_key,
-#    remove_catalog => true,
 #  }
 #
 # Copyright 2017 Sam McLeod.
 #
 
 class luks(
-  $ensure  = installed,
+  $ensure  = latest,
   $package = 'cryptsetup',
+  $remove_catalog = false,
+  $puppet_conf_file = '/etc/puppet/puppet.conf',
+  $puppet_catalog = '/var/lib/puppet/client_data/catalog/*.json',
+  $shred = '/usr/bin/shred --iterations 3 --random=/dev/urandom',
 ) {
 
   package { $package:
     ensure => $ensure,
   }
 
+  if $remove_catalog == true {
+    # Ensure that the locally cached catalog is removed after each puppet run
+    # as it may contain the LUKS key
+    file_line { 'remove_catalog' :
+      line  => "     postrun_command=${shred} ${puppet_catalog}",  #TODO make this nicer
+      path  => $puppet_conf_file,
+      after => '[main]',
+    }
+  }
 }
