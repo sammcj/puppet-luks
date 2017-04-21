@@ -49,7 +49,8 @@ define luks::device(
   $base64 = false,
   $mapper = $name,
   $remove_catalog = false,
-  $temp   = "/dev/shm/${name}"
+  $temp   = "/dev/shm/${name}",
+  $shred = "/usr/bin/shred --iterations 10 --random=/dev/urandom ${temp}",
 ) {
   # Ensure LUKS is available.
   include luks
@@ -109,32 +110,9 @@ define luks::device(
   # Shredding probably not necessary on ramdisk file, but nevertheless
   # scramble the contents at those pages with `shred` -- also covers
   # the case when temp location is customized.
-  $shred = "/usr/bin/shred --iterations 10 --random=/dev/urandom ${temp}"
   exec { $delete_key:
     command     => "${shred} && /bin/echo -n > ${temp}",
     user        => 'root',
     refreshonly => true,
   }
 
-  # TODO test this dodgy code
-  if $remove_catalog == true {
-
-    case empty($::pe_concat_basir) {
-      true: { # Puppet Open Source
-        $::puppet_conf_file  => '/etc/puppet/puppet.conf',
-        $::puppet_catalog    => '/var/lib/puppet/client_data/catalog/*.json',
-      }
-      default: { # Puppet Enterprise
-        $::puppet_conf_file  => '/etc/puppetlabs/puppet/puppet.conf',
-        $::puppet_catalog    => '/opt/puppetlabs/puppet/cache/client_data/catalog/*.json',
-      }
-    }
-
-    # Ensure that the locally cached catalog is removed after each puppet run
-    # as it may contain the LUKS key
-    file_line { $::puppet_conf_file :
-      line  => "     postrun_command=${::shred} ${::puppet_catalog}",
-      after => '[main]',
-    }
-  }
-}
