@@ -3,6 +3,7 @@
 ## Description
 
 Puppet module for managing LUKS encrypted volumes
+It should be considered a **WORK IN PROGRESS** - expect bugs and feel free to log issues or contribute fixes
 
 ## Setup
 

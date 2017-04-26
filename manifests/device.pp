@@ -33,6 +33,14 @@
 #  Path to temporary file to store the encryption key in, defaults to
 #  "/dev/shm/${name}".
 #
+# [*remove_catalog*]
+#  When set to `true` the Puppet catalog that _may_ contain private key information will be scrubbed.
+#  **NOTE:** This is a work in progress - see #2
+#
+# [*force_format*]
+# Instructs LuksFormat to run in 'batchmode' which esentially forces the block device
+# to be formatted, use with care.
+#
 # === Example
 #
 # The following creates a LUKS device at '/dev/mapper/data', backed by
@@ -81,9 +89,9 @@ define luks::device(
   }
 
   if $force_format == true {
-    $format_command = '/sbin/cryptsetup luksFormat --batch-mode'
+    $format_options = '--batch-mode'
   } else {
-    $format_command = '/sbin/cryptsetup luksFormat'
+    $format_options = ''
   }
 
   exec { $create_key:
@@ -95,7 +103,7 @@ define luks::device(
 
   # Format as LUKS device if it isn't already.
   exec { $luks_format:
-    command => "${format_command} ${device} ${temp_key_path}",
+    command => "/sbin/cryptsetup luksFormat ${format_options} ${device} ${temp_key_path}",
     user    => 'root',
     unless  => "/sbin/cryptsetup isLuks ${device}",
     require => [Class['luks'], Exec[$create_key]],
@@ -118,4 +126,3 @@ define luks::device(
     user        => 'root',
     refreshonly => true,
   }
-
