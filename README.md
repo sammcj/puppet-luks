@@ -13,8 +13,8 @@ This is a very basic module for configuring encrypted volumes using LUKS on Linu
 
 ## Usage
 
-The following creates a LUKS device at '/dev/mapper/secretdata', backed by
-the partition at '/dev/sdb1', encrypted with the key 'agoodsecretkey':
+The following creates a LUKS device at `/dev/mapper/secretdata`, backed by
+the partition at `/dev/sdb1`, encrypted with the value of `$secret_key`:
 
 ```puppet
   include ::luks
@@ -28,7 +28,7 @@ the partition at '/dev/sdb1', encrypted with the key 'agoodsecretkey':
   }
 ```
 
-In practise the key should come from somewhere encrypted such as hiera-eyaml.
+The secret key should come from somewhere encrypted such as [hiera-eyaml](https://github.com/voxpupuli/hiera-eyaml).
 
 ## Reference
 
@@ -41,33 +41,44 @@ In practise the key should come from somewhere encrypted such as hiera-eyaml.
 #### `key`
  The encryption key for the LUKS device.
 
+#### `temp_key_path`
+ The path where the decrypted key will be temporarily stored before being scrubbed.
+ 
+ Defaults to the `/dev/shm/${name}` ramdisk.
+ 
+#### `force_format`
+ Instructs LuksFormat to run in 'batchmode' which esentially forces the block device
+ to be formatted, use with care.
+
 #### `base64`
  Set to true if the key is base64-encoded (necessary for encryption keys
- with binary data); defaults to false.
+ with binary data).
+ 
+ Defaults to false.
 
 #### `mapper`
- The name to use in `/dev/mapper` for the device, defaults to the name
- to the name of the resource.
+ The name to use in `/dev/mapper` for the device.
+ 
+ Defaults to the name to the name of the resource, i.e. `/dev/mapper/secretdata`
+ 
+#### `remove_catalog`
+  When set to `true` the Puppet catalog that _may_ contain private key information will be scrubbed.
+  
+  **NOTE:** This is a work in progress - see #2
 
-#### `temp`
- Path to temporary file to store the encryption key in, defaults to
- "/dev/shm/${name}".
 
 ## Limitations
 
 - At the time of writing this, it has been tested against CentOS 7.2
-- **Warning**: This will overwrite any existing data on the specified device
 - **Warning**: The secret key may still be cached by Puppet in the compiled catalog
   (/var/lib/puppet/client_data/catalog/*.json)  To prevent this secret from
   persisting on disk you will have still have delete this file via some
   mechanism, e.g., through a cron task or configuring the Puppet agent to
   run a [`postrun_command`](http://docs.puppetlabs.com/references/stable/configuration.html#postruncommand)
 
-## Development
+
+## Development/Release Notes/Contributors/Etc.
 
 Please feel free to submit issues, and merge requests or generally contribute to this module.
 
-## Release Notes/Contributors/Etc.
-
-- Thanks to @counsyl as this module has borrowed LUKS specific code from the [puppet-sys](https://github.com/counsyl/puppet-sys) module.
 - [Official LUKS website](https://guardianproject.info/code/luks/)
