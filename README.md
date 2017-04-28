@@ -74,7 +74,7 @@ The secret key should come from somewhere encrypted such as [hiera-eyaml](https:
   (/var/lib/puppet/client_data/catalog/*.json)  To prevent this secret from
   persisting on disk you will have still have delete this file via some
   mechanism, e.g., through a cron task or configuring the Puppet agent to
-  run a [`postrun_command`](http://docs.puppetlabs.com/references/stable/configuration.html#postruncommand)
+  run a [`postrun_command`](https://docs.puppet.com/puppet/latest/configuration.html#postruncommand)
 
 
 ## Development/Release Notes/Contributors/Etc.
