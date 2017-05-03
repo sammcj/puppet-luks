@@ -126,3 +126,4 @@ define luks::device(
     user        => 'root',
     refreshonly => true,
   }
+}
