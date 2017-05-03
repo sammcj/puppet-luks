@@ -82,3 +82,5 @@ The secret key should come from somewhere encrypted such as [hiera-eyaml](https:
 Please feel free to submit issues, and merge requests or generally contribute to this module.
 
 - [Official LUKS website](https://guardianproject.info/code/luks/)
+- [Module on Puppet Forge](https://forge.puppet.com/sammcj/luks/readme)
+- [GitLab Mirror](https://gitlab.com/sammcj/puppet-luks/tree/master)
