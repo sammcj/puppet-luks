@@ -7,7 +7,10 @@
   "source": "https://github.com/sammcj/puppet-luks.git",
   "project_page": "https://github.com/sammcj/puppet-luks",
   "issues_url": "https://github.com/sammcj/puppet-luks/issues",
-  "operatingsystem_support": [{ "operatingsystem":"RedHat", "operatingsystemrelease":[ "7.0", "7.1", "7.2" ]}],
+  "operatingsystem_support": [
+    { "operatingsystem":"RedHat", "operatingsystemrelease":[ "7.0", "7.1", "7.2" ]},
+    { "operatingsystem":"CentOS", "operatingsystemrelease":[ "7.0", "7.1", "7.2" ]}
+  ],
   "dependencies": [{"name":"puppetlabs-stdlib","version_requirement":">= 1.0.0"}],
   "data_provider": "hiera"
 }
