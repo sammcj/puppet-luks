@@ -11,5 +11,8 @@
     { "operatingsystem":"RedHat", "operatingsystemrelease":[ "7.0", "7.1", "7.2" ]},
     { "operatingsystem":"CentOS", "operatingsystemrelease":[ "7.0", "7.1", "7.2" ]}
   ],
+  "dependencies": [
+    { "name": "binford2k-node_encrypt", "version_requirement": ">= 0.2.5 < 1.0.0" }
+  ],
   "data_provider": "hiera"
 }

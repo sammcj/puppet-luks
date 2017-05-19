@@ -29,14 +29,6 @@
 #  The name to use in `/dev/mapper` for the device, defaults to the name
 #  to the name of the resource.
 #
-# [*temp_key_path*]
-#  Path to temporary file to store the encryption key in, defaults to
-#  "/dev/shm/${name}".
-#
-# [*remove_catalog*]
-#  When set to `true` the Puppet catalog that _may_ contain private key information will be scrubbed.
-#  **NOTE:** This is a work in progress - see #2
-#
 # [*force_format*]
 # Instructs LuksFormat to run in 'batchmode' which esentially forces the block device
 # to be formatted, use with care.
@@ -56,36 +48,20 @@ define luks::device(
   $key,
   $base64 = false,
   $mapper = $name,
-  $remove_catalog = false,
   $force_format = false,
-  $temp_key_path   = "/dev/shm/${name}",
 ) {
   # Ensure LUKS is available.
   include luks
 
   # Setting up unique variable names for the resources.
   $devmapper = "/dev/mapper/${mapper}"
-  $create_key = "create-key-${name}"
-  $delete_key = "delete-key-${name}"
   $luks_format = "luks-format-${name}"
   $luks_open = "luks-open-${name}"
 
-  # Temporary file to hold the key.  Actual key contents are put in placed
-  # and removed via the $create_key and $delete_key exec resources.
-  file { $temp_key_path:
-    ensure => file,
-    backup => false,
-    owner  => 'root',
-    group  => 'root',
-    mode   => '0400',
-    notify => Exec[$create_key],
-  }
-
-  # Put key contents into temporary file; decode if base64-encoded.
   if $base64 {
-    $create_key_cmd = "/bin/echo -n '${key}' | /usr/bin/base64 -d > ${temp_key_path}"
+    $echo_cmd = 'echo -n "$(puppet node decrypt --env CRYPTKEY)" | /usr/bin/base64 -d'
   } else {
-    $create_key_cmd = "/bin/echo -n '${key}' > ${temp_key_path}"
+    $echo_cmd = 'echo -n "$(puppet node decrypt --env CRYPTKEY)"'
   }
 
   if $force_format == true {
@@ -94,36 +70,25 @@ define luks::device(
     $format_options = ''
   }
 
-  exec { $create_key:
-    command => $create_key_cmd,
-    user    => 'root',
-    unless  => "/usr/bin/test -b ${devmapper}",
-    notify  => Exec[$luks_open],
-  }
+  $node_encrypted_key = node_encrypt($key)
+  redact('key') # Redact the passed in parameter from the catalog
 
   # Format as LUKS device if it isn't already.
   exec { $luks_format:
-    command => "/sbin/cryptsetup luksFormat ${format_options} ${device} ${temp_key_path}",
-    user    => 'root',
-    unless  => "/sbin/cryptsetup isLuks ${device}",
-    require => [Class['luks'], Exec[$create_key]],
+    command     => "${echo_cmd} | /sbin/cryptsetup --key-file - luksFormat ${format_options} ${device}",
+    user        => 'root',
+    unless      => "/sbin/cryptsetup isLuks ${device}",
+    environment => "CRYPTKEY=${node_encrypted_key}",
+    require     => Class['luks'],
   }
 
   # Open the LUKS device.
   exec { $luks_open:
-    command     => "/sbin/cryptsetup --key-file ${temp_key_path} luksOpen ${device} ${mapper}",
+    command     => "${echo_cmd} | /sbin/cryptsetup --key-file - luksOpen ${device} ${mapper}",
     user        => 'root',
-    onlyif      => "/usr/bin/test ! -b ${devmapper}",
+    onlyif      => "/usr/bin/test ! -b ${devmapper}", # Check devmapper is a block device
+    environment => "CRYPTKEY=${node_encrypted_key}",
     creates     => $devmapper,
-    refreshonly => true,
-    subscribe   => Exec[$create_key],
-    notify      => Exec[$delete_key],
     require     => Exec[$luks_format],
-  }
-
-  exec { $delete_key:
-    command     => "/usr/bin/shred --iterations 2 --random=/dev/urandom ${temp_key_path} && /bin/echo -n > ${temp_key_path}",
-    user        => 'root',
-    refreshonly => true,
   }
 }

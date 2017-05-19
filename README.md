@@ -61,20 +61,15 @@ The secret key should come from somewhere encrypted such as [hiera-eyaml](https:
  
  Defaults to the name to the name of the resource, i.e. `/dev/mapper/secretdata`
  
-#### `remove_catalog`
-  When set to `true` the Puppet catalog that _may_ contain private key information will be scrubbed.
-  
-  **NOTE:** This is a work in progress - see #2
-
 
 ## Limitations
 
 - At the time of writing this, it has been tested against CentOS 7.2
-- **Warning**: The secret key may still be cached by Puppet in the compiled catalog
-  (/var/lib/puppet/client_data/catalog/*.json)  To prevent this secret from
-  persisting on disk you will have still have delete this file via some
-  mechanism, e.g., through a cron task or configuring the Puppet agent to
-  run a [`postrun_command`](https://docs.puppet.com/puppet/latest/configuration.html#postruncommand)
+- **Warning**: The secret key (encrypted with the node certificate) 
+  will still be cached by Puppet in the compiled catalog. Suggest using a null
+  [catalog_cache_terminus](https://docs.puppet.com/puppet/latest/configuration.html#catalogcacheterminus) to prevent this happening.
+  Examples: [https://github.com/dylanratcliffe/no_cached_catalogs](https://github.com/dylanratcliffe/no_cached_catalogs) and
+  [https://github.com/ross-w/secretresource](https://github.com/ross-w/secretresource)
 
 
 ## Development/Release Notes/Contributors/Etc.
