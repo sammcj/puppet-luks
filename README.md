@@ -3,7 +3,8 @@
 ## Description
 
 Puppet module for managing LUKS encrypted volumes
-It should be considered a **WORK IN PROGRESS** - expect bugs and feel free to log issues or contribute fixes
+
+[![Code Climate](https://codeclimate.com/github/codeclimate/codeclimate/badges/gpa.svg)](https://codeclimate.com/github/sammcj/puppet-luks)
 
 ## Setup
 
@@ -66,7 +67,7 @@ The secret key should come from somewhere encrypted such as [hiera-eyaml](https:
 
 - At the time of writing this, it has been tested against CentOS 7.2
 - **Warning**: The secret key (encrypted with the node certificate) 
-  will still be cached by Puppet in the compiled catalog. Suggest using a null
+  will still be cached by Puppet in the compiled catalog - _unless_ you use a null
   [catalog_cache_terminus](https://docs.puppet.com/puppet/latest/configuration.html#catalogcacheterminus) to prevent this happening.
   Examples: [https://github.com/dylanratcliffe/no_cached_catalogs](https://github.com/dylanratcliffe/no_cached_catalogs) and
   [https://github.com/ross-w/secretresource](https://github.com/ross-w/secretresource)
