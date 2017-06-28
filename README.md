@@ -42,11 +42,6 @@ The secret key should come from somewhere encrypted such as [hiera-eyaml](https:
 #### `key`
  The encryption key for the LUKS device.
 
-#### `temp_key_path`
- The path where the decrypted key will be temporarily stored before being scrubbed.
- 
- Defaults to the `/dev/shm/${name}` ramdisk.
- 
 #### `force_format`
  Instructs LuksFormat to run in 'batchmode' which esentially forces the block device
  to be formatted, use with care.
@@ -79,4 +74,3 @@ Please feel free to submit issues, and merge requests or generally contribute to
 
 - [Official LUKS website](https://guardianproject.info/code/luks/)
 - [Module on Puppet Forge](https://forge.puppet.com/sammcj/luks/readme)
-- [GitLab Mirror](https://gitlab.com/sammcj/puppet-luks/tree/master)
