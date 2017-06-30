@@ -61,6 +61,8 @@ The secret key should come from somewhere encrypted such as [hiera-eyaml](https:
 ## Limitations
 
 - At the time of writing this, it has been tested against CentOS 7.2
+- The key change functionality only _adds_ new keys, the original key(s) remain in other key slots. It is highly recommended
+  to monitor for key slot usage and manually remove redundant keys as required.
 - **Warning**: The secret key (encrypted with the node certificate) 
   will still be cached by Puppet in the compiled catalog - _unless_ you use a null
   [catalog_cache_terminus](https://docs.puppet.com/puppet/latest/configuration.html#catalogcacheterminus) to prevent this happening.
