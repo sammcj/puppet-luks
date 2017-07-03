@@ -57,12 +57,17 @@ define luks::device(
   $devmapper = "/dev/mapper/${mapper}"
   $luks_format = "luks-format-${name}"
   $luks_open = "luks-open-${name}"
+  $luks_keychange = "luks-keychange-${name}"
 
   if $base64 {
     $echo_cmd = 'echo -n "$(puppet node decrypt --env CRYPTKEY)" | /usr/bin/base64 -d'
   } else {
     $echo_cmd = 'echo -n "$(puppet node decrypt --env CRYPTKEY)"'
   }
+
+  $cryptsetup_cmd = '/sbin/cryptsetup'
+  $cryptsetup_key_cmd = "${echo_cmd} | ${cryptsetup_cmd} --key-file -"
+  $master_key_cmd = "dmsetup table --target crypt --showkey ${devmapper} | cut -f5 -d\" \" | xxd -r -p"
 
   if $force_format == true {
     $format_options = '--batch-mode'
@@ -75,20 +80,30 @@ define luks::device(
 
   # Format as LUKS device if it isn't already.
   exec { $luks_format:
-    command     => "${echo_cmd} | /sbin/cryptsetup --key-file - luksFormat ${format_options} ${device}",
+    command     => "${cryptsetup_key_cmd} luksFormat ${format_options} ${device}",
     user        => 'root',
-    unless      => "/sbin/cryptsetup isLuks ${device}",
+    unless      => "${cryptsetup_cmd} isLuks ${device}",
     environment => "CRYPTKEY=${node_encrypted_key}",
     require     => Class['luks'],
   }
 
   # Open the LUKS device.
   exec { $luks_open:
-    command     => "${echo_cmd} | /sbin/cryptsetup --key-file - luksOpen ${device} ${mapper}",
+    command     => "${cryptsetup_key_cmd} luksOpen ${device} ${mapper}",
     user        => 'root',
     onlyif      => "/usr/bin/test ! -b ${devmapper}", # Check devmapper is a block device
     environment => "CRYPTKEY=${node_encrypted_key}",
     creates     => $devmapper,
     require     => Exec[$luks_format],
+  }
+
+  # Key change. Will only work if device currently open.
+  # Currently will only add a changed key, old one will remain until manually removed.
+  exec { $luks_keychange:
+    command     => "bash -c '${cryptsetup_key_cmd} luksAddKey --master-key-file <(${master_key_cmd}) ${device}'",
+    user        => 'root',
+    unless      => "${cryptsetup_key_cmd} luksDump ${device} --dump-master-key --batch-mode > /dev/null",
+    environment => "CRYPTKEY=${node_encrypted_key}",
+    require     => Exec[$luks_open],
   }
 }
