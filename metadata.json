@@ -1,6 +1,6 @@
 {
   "name": "sammcj-luks",
-  "version": "0.1.6",
+  "version": "1.0.0",
   "author": "sammcj",
   "summary": "Puppet module for managing LUKS encrypted volumes",
   "license": "Apache-2.0",
