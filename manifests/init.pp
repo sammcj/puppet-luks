@@ -51,8 +51,6 @@ class luks(
   $package = 'cryptsetup',
 ) {
 
-  package { $package:
-    ensure => $ensure,
-  }
+  ensure_packages($package, {'ensure' => $ensure})
 
 }
