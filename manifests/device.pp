@@ -100,7 +100,7 @@ define luks::device(
   # Key change. Will only work if device currently open.
   # Currently will only add a changed key, old one will remain until manually removed.
   exec { $luks_keychange:
-    command     => "bash -c '${cryptsetup_key_cmd} luksAddKey --master-key-file <(${master_key_cmd}) ${device}'",
+    command     => "bash -c '${cryptsetup_key_cmd} luksAddKey --master-key-file <(${master_key_cmd}) ${device} -'",
     user        => 'root',
     unless      => "${cryptsetup_key_cmd} luksDump ${device} --dump-master-key --batch-mode > /dev/null",
     environment => "CRYPTKEY=${node_encrypted_key}",
